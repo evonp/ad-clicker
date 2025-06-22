@@ -7,7 +7,7 @@ def setup_warp_proxy():
     print("🔧 Setting up WARP proxy...")
     
     try:
-        # 更新安装命令
+        # 安装WARP
         commands = [
             "curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg",
             'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/cloudflare-client.list',
@@ -23,11 +23,13 @@ def setup_warp_proxy():
         subprocess.run("warp-cli set-mode proxy", shell=True, check=True)
         subprocess.run("warp-cli connect", shell=True, check=True)
         
+        # 验证IP
         verify_ip()
         
     except Exception as e:
         print(f"⚠️ WARP setup failed: {e}")
         activate_backup_proxy()
+
 def verify_ip():
     """验证IP是否为美国IP"""
     print("🌍 Verifying IP location...")
@@ -48,9 +50,5 @@ def verify_ip():
 def activate_backup_proxy():
     """激活备用代理方案"""
     print("🛡️ Activating backup proxy...")
-    try:
-        # 尝试使用公共代理作为备选
-        print("Using public proxy as fallback...")
-        # 这里可以添加更多备用代理选项
-    except Exception as e:
-        print(f"⚠️ Backup proxy failed: {e}")
+    # 这里可以添加备用代理方案
+    pass
