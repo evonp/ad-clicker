@@ -1,0 +1,64 @@
+import random
+import time
+import math
+from config import get_random_wait_time, should_scroll, get_random_viewport
+
+def simulate_human_behavior(page):
+    """模拟真实用户行为"""
+    # 初始随机等待
+    initial_wait = get_random_wait_time()
+    time.sleep(initial_wait / 2)
+    
+    # 随机滚动
+    if should_scroll():
+        scroll_behavior(page)
+        
+    # 鼠标移动模式
+    move_mouse(page)
+    
+    # 再次等待
+    time.sleep(initial_wait / 2)
+    
+def scroll_behavior(page):
+    """模拟页面滚动行为"""
+    scroll_times = random.randint(1, 4)
+    for i in range(scroll_times):
+        # 随机滚动距离 (100-800像素)
+        scroll_distance = random.randint(100, 800)
+        
+        # 添加随机滚动速度变化
+        scroll_speed = random.uniform(100, 500)
+        
+        page.mouse.wheel(0, scroll_distance / scroll_speed)
+        time.sleep(random.uniform(0.3, 1.2))
+        
+def move_mouse(page):
+    """模拟人类鼠标移动模式"""
+    viewport = get_random_viewport()
+    width, height = viewport["width"], viewport["height"]
+    
+    # 生成随机移动路径 (使用贝塞尔曲线模拟)
+    points = []
+    for i in range(5):
+        x = random.randint(0, width)
+        y = random.randint(0, height)
+        points.append((x, y))
+    
+    # 模拟人类移动速度 (先快后慢)
+    for i in range(len(points) - 1):
+        start = points[i]
+        end = points[i+1]
+        
+        # 计算距离和步数
+        distance = math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2)
+        steps = max(5, int(distance / 10))
+        
+        for step in range(steps):
+            t = step / steps
+            # 使用缓动函数使移动更自然
+            ease_t = t * t * (3 - 2 * t)
+            x = start[0] + (end[0] - start[0]) * ease_t
+            y = start[1] + (end[1] - start[1]) * ease_t
+            
+            page.mouse.move(x, y)
+            time.sleep(random.uniform(0.01, 0.05))

@@ -1,0 +1,102 @@
+from playwright.sync_api import sync_playwright
+import random
+import time
+from config import TARGET_URL, get_random_user_agent, get_random_viewport, should_bounce, AD_SELECTORS
+from behavior_simulator import simulate_human_behavior
+
+def find_clickable_elements(page):
+    """智能查找可点击元素"""
+    # 尝试使用您提供的选择器
+    selector = ", ".join(AD_SELECTORS)
+    elements = page.query_selector_all(selector)
+    
+    if elements:
+        print(f"🔍 Found {len(elements)} elements with custom selectors")
+        return elements
+    
+    print("⚠️ Custom selectors not found, using fallback")
+    
+    # 备用方案：查找所有按钮和链接
+    buttons = page.query_selector_all("button")
+    links = page.query_selector_all("a")
+    
+    # 添加更多可能的元素类型
+    divs = page.query_selector_all('div[onclick]')
+    spans = page.query_selector_all('span[onclick]')
+    
+    all_elements = buttons + links + divs + spans
+    
+    if not all_elements:
+        print("⚠️ No clickable elements found at all")
+        
+    return all_elements
+
+def execute_click():
+    print("🚀 Starting click execution...")
+    
+    with sync_playwright() as p:
+        # 创建浏览器上下文
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(
+            user_agent=get_random_user_agent(),
+            viewport=get_random_viewport(),
+            proxy={"server": "socks5://127.0.0.1:40000"}
+        )
+        
+        page = context.new_page()
+        
+        try:
+            # 访问目标页面
+            page.goto(TARGET_URL, timeout=60000, wait_until="domcontentloaded")
+            print(f"🌐 Loaded: {TARGET_URL}")
+            
+            # 等待页面完全加载
+            page.wait_for_load_state("networkidle", timeout=15000)
+            
+            # 模拟用户行为
+            simulate_human_behavior(page)
+            
+            # 决定是否跳出
+            if should_bounce():
+                print("↩️ Simulating bounce (no click)")
+                return False
+            
+            # 定位广告元素
+            ad_elements = find_clickable_elements(page)
+            
+            if not ad_elements:
+                print("⚠️ No ad elements found")
+                return False
+                
+            # 随机选择一个广告元素
+            ad = random.choice(ad_elements)
+            print(f"🎯 Selected element: {ad.evaluate('el => el.outerHTML')[:100]}...")
+            
+            # 确保元素在视图中
+            ad.scroll_into_view_if_needed()
+            
+            # 模拟悬停和点击
+            ad.hover()
+            time.sleep(random.uniform(0.5, 1.5))
+            
+            # 使用JavaScript点击避免检测
+            page.evaluate("element => element.click()", ad)
+            
+            # 点击后行为
+            try:
+                # 等待页面变化
+                page.wait_for_load_state("networkidle", timeout=5000)
+                print("✅ Click successful - page changed detected")
+            except:
+                print("✅ Click executed - no page change detected")
+                
+            # 随机浏览时间
+            time.sleep(random.uniform(2, 8))
+            return True
+            
+        except Exception as e:
+            print(f"❌ Click failed: {str(e)}")
+            return False
+            
+        finally:
+            browser.close()

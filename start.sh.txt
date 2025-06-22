@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# 安装必要依赖
+sudo apt-get update
+sudo apt-get install -y curl gpg
+
+# 安装Python依赖
+pip install -r requirements.txt
+playwright install
+
+# 设置WARP代理
+python -c "from proxy_manager import setup_warp_proxy; setup_warp_proxy()"
+
+# 启动主程序
+python main.py

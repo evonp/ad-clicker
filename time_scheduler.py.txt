@@ -1,0 +1,31 @@
+import time
+import random
+from datetime import datetime
+import pytz
+from config import PEAK_HOURS, OFF_PEAK_HOURS
+
+# 设置时区为美国东部时间
+EASTERN = pytz.timezone('US/Eastern')
+
+def get_current_hour():
+    return datetime.now(EASTERN).hour
+
+def should_run_click():
+    current_hour = get_current_hour()
+    
+    if current_hour in PEAK_HOURS:
+        # 高峰时段：每小时2-5次点击
+        return random.random() < 0.08  # 约5次/小时
+    elif current_hour in OFF_PEAK_HOURS:
+        # 低峰时段：每小时0-1次点击
+        return random.random() < 0.02  # 约0.5次/小时
+    return False
+
+def get_click_delay():
+    current_hour = get_current_hour()
+    
+    if current_hour in PEAK_HOURS:
+        return random.randint(300, 1200)  # 5-20分钟
+    elif current_hour in OFF_PEAK_HOURS:
+        return random.randint(1800, 3600)  # 30-60分钟
+    return 1800  # 默认30分钟

@@ -1,0 +1,36 @@
+import time
+import os
+from time_scheduler import should_run_click, get_click_delay
+from click_executor import execute_click
+from proxy_manager import setup_warp_proxy
+
+# 安装WARP代理
+if not os.environ.get("WARP_INSTALLED"):
+    try:
+        setup_warp_proxy()
+        os.environ["WARP_INSTALLED"] = "true"
+    except Exception as e:
+        print(f"⚠️ Critical error in proxy setup: {e}")
+        # 继续运行但可能影响效果
+
+def main():
+    print("🟢 Ad Click System Started")
+    click_count = 0
+    
+    while True:
+        if should_run_click():
+            print("⏰ Time to run a click")
+            success = execute_click()
+            if success:
+                click_count += 1
+                print(f"📊 Total Clicks: {click_count}")
+            else:
+                print("🔄 Attempting next click later")
+        
+        # 计算下次运行时间
+        delay = get_click_delay()
+        print(f"⏳ Next check in {delay//60} minutes")
+        time.sleep(delay)
+
+if __name__ == "__main__":
+    main()
