@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: |
-      pip install playwright pytz requests beautifulsoup4 schedule
+      pip install -r requirements.txt
       python3 -m playwright install chromium
       chmod +x start.sh
     startCommand: ./start.sh
