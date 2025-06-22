@@ -3,9 +3,14 @@ services:
     name: ad-clicker
     env: python
     plan: free
-    buildCommand: "chmod +x start.sh && ./start.sh"  # 保持与网页设置一致
-    startCommand: "python main.py"
+    buildCommand: |
+      pip install playwright pytz requests beautifulsoup4 schedule
+      python3 -m playwright install chromium
+      chmod +x start.sh
+    startCommand: ./start.sh
     envVars:
       - key: DISPLAY
         value: ":99"
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: "0"
     numInstances: 15
