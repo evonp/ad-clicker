@@ -40,7 +40,16 @@ verify_ip() {
 # 主执行流程
 if start_warp; then
     configure_warp
-    verify_ip
+    
+    # 验证IP最多尝试3次
+    for i in {1..3}; do
+        if verify_ip; then
+            break
+        else
+            echo "🔄 Retrying IP verification ($i/3)..."
+            sleep 3
+        fi
+    done
     
     echo "🟢 Ad Click System Started"
     while true; do
