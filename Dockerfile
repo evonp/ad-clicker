@@ -1,6 +1,7 @@
+# 使用官方 Python 基础镜像
 FROM python:3.10-slim-bullseye
 
-# 安装核心依赖
+# 安装核心依赖（移除了行尾注释）
 RUN apt-get update && apt-get install -y \
     curl \
     gpg \
@@ -23,9 +24,9 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     build-essential \
     dos2unix \
-    net-tools \  # 新增网络工具
-    iproute2 \   # 新增IP路由工具
-    procps       # 新增进程管理工具
+    net-tools \
+    iproute2 \
+    procps
 
 # 安装 WARP
 RUN curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg && \
@@ -33,7 +34,10 @@ RUN curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --dearmor --out
     apt-get update && \
     apt-get install -y cloudflare-warp
 
+# 设置工作目录
 WORKDIR /app
+
+# 复制应用文件
 COPY . .
 
 # 修复权限和换行符
@@ -43,7 +47,7 @@ RUN chmod 755 start.sh && \
 # 安装Python依赖
 RUN pip install --no-cache-dir -r requirements.txt pysocks
 
-# 安装浏览器
+# 安装 Playwright 浏览器
 RUN python -m playwright install chromium
 
 # 启动命令
