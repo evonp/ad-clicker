@@ -1,10 +1,6 @@
-# 使用官方 Python 基础镜像
 FROM python:3.10-slim-bullseye
 
-# 设置工作目录
-WORKDIR /app
-
-# 安装系统依赖（移除了行尾注释）
+# 安装核心依赖
 RUN apt-get update && apt-get install -y \
     curl \
     gpg \
@@ -26,25 +22,29 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     python3-dev \
     build-essential \
-    dos2unix
+    dos2unix \
+    net-tools \  # 新增网络工具
+    iproute2 \   # 新增IP路由工具
+    procps       # 新增进程管理工具
 
-# 安装 WARP（使用硬编码的发行版名称）
+# 安装 WARP
 RUN curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg && \
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ bullseye main" | tee /etc/apt/sources.list.d/cloudflare-client.list && \
     apt-get update && \
     apt-get install -y cloudflare-warp
 
-# 复制应用文件
+WORKDIR /app
 COPY . .
 
-# 设置启动脚本权限
-RUN chmod 755 start.sh
+# 修复权限和换行符
+RUN chmod 755 start.sh && \
+    dos2unix start.sh
 
-# 安装 Python 依赖
+# 安装Python依赖
 RUN pip install --no-cache-dir -r requirements.txt pysocks
 
-# 安装 Playwright 浏览器
+# 安装浏览器
 RUN python -m playwright install chromium
 
-# 启动脚本
-CMD ["/bin/bash", "-c", "dos2unix start.sh && ./start.sh"]
+# 启动命令
+CMD ["./start.sh"]
