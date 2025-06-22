@@ -1,15 +1,12 @@
-# 使用更可靠的基础镜像
-FROM ubuntu:22.04
+FROM python:3.10-slim-bullseye
 
-# 安装 Python 和基本工具
-RUN apt-get update && \
-    apt-get install -y python3.10 python3-pip curl gpg
-
-# 设置工作目录
 WORKDIR /app
 
-# 安装浏览器依赖
-RUN apt-get install -y \
+# 安装系统依赖（包括 SOCKS 支持）
+RUN apt-get update && apt-get install -y \
+    curl \
+    gpg \
+    lsb-release \
     libnss3 \
     libnspr4 \
     libatk1.0-0 \
@@ -22,22 +19,26 @@ RUN apt-get install -y \
     libxfixes3 \
     libxrandr2 \
     libgbm1 \
-    libasound2
+    libasound2 \
+    pkg-config \
+    libssl-dev \  # 添加 SOCKS 依赖
+    python3-dev \ # 添加 Python 开发工具
+    build-essential
 
-# 安装 WARP（使用 Ubuntu 专用方法）
-RUN curl https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg && \
-    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ jammy main" | tee /etc/apt/sources.list.d/cloudflare-client.list && \
+# 安装 WARP（使用硬编码的发行版名称）
+RUN curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ bullseye main" | tee /etc/apt/sources.list.d/cloudflare-client.list && \
     apt-get update && \
     apt-get install -y cloudflare-warp
 
-# 复制应用文件
-COPY . .
+# 复制应用文件（使用 COPY --chmod 设置权限）
+COPY --chmod=755 . .
 
-# 安装 Python 依赖
-RUN pip3 install --no-cache-dir -r requirements.txt
+# 安装 Python 依赖（包括 SOCKS 支持）
+RUN pip install --no-cache-dir -r requirements.txt pysocks
 
 # 安装 Playwright 浏览器
-RUN python3 -m playwright install chromium
+RUN python -m playwright install chromium
 
 # 启动脚本
-CMD ["bash", "start.sh"]
+CMD ["/bin/bash", "-c", "dos2unix start.sh && ./start.sh"]
