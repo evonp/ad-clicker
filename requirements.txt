@@ -3,3 +3,4 @@ pytz
 requests
 beautifulsoup4
 schedule
+pysocks  # 添加 SOCKS 支持
