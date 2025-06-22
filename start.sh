@@ -19,4 +19,4 @@ sleep 3
 python3 -c "from proxy_manager import verify_ip; verify_ip()"
 
 # 启动主程序
-python3 main.py
+python3 main.py 
