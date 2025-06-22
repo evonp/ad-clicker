@@ -1,4 +1,5 @@
 import requests
+import os
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import socks
@@ -14,38 +15,40 @@ def create_session():
     adapter = HTTPAdapter(max_retries=retry_strategy)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
+    
+    # 自动检测代理设置
+    proxy_settings = {}
+    if os.environ.get('HTTP_PROXY'):
+        proxy_settings['http'] = os.environ.get('HTTP_PROXY')
+    if os.environ.get('HTTPS_PROXY'):
+        proxy_settings['https'] = os.environ.get('HTTPS_PROXY')
+    if os.environ.get('SOCKS_PROXY'):
+        proxy_settings['http'] = os.environ.get('SOCKS_PROXY')
+        proxy_settings['https'] = os.environ.get('SOCKS_PROXY')
+    
+    session.proxies = proxy_settings
     return session
 
 def verify_ip():
     session = create_session()
-    proxies = {
-        'http': 'socks5://127.0.0.1:40000',
-        'https': 'socks5://127.0.0.1:40000'
-    }
     
     try:
-        # 测试代理连接
-        test_response = session.get(
-            "https://www.cloudflare.com/cdn-cgi/trace", 
-            proxies=proxies, 
-            timeout=10
-        )
-        
-        if "warp=on" not in test_response.text:
-            print("⚠️ WARP not active in proxy connection")
-            return False
-        
-        # 获取完整IP信息
+        # 获取IP信息
         ip_response = session.get(
             "https://ipinfo.io/json", 
-            proxies=proxies, 
             timeout=10
         )
         
         if ip_response.status_code == 200:
             data = ip_response.json()
             print(f"🌐 Current IP: {data.get('ip')} | Country: {data.get('country')}")
-            return data.get('country') == 'US'
+            
+            # 检查是否为美国IP
+            if data.get('country') == 'US':
+                return True
+            else:
+                print("⚠️ Proxy is not providing US IP address")
+                return False
         else:
             print(f"⚠️ IP verification failed: HTTP {ip_response.status_code}")
             return False
