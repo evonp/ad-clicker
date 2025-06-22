@@ -1,7 +1,6 @@
-# 使用官方 Python 基础镜像
 FROM python:3.10-slim-bullseye
 
-# 安装核心依赖（移除了行尾注释）
+# 安装基础依赖
 RUN apt-get update && apt-get install -y \
     curl \
     gpg \
@@ -23,16 +22,7 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     python3-dev \
     build-essential \
-    dos2unix \
-    net-tools \
-    iproute2 \
-    procps
-
-# 安装 WARP
-RUN curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg && \
-    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ bullseye main" | tee /etc/apt/sources.list.d/cloudflare-client.list && \
-    apt-get update && \
-    apt-get install -y cloudflare-warp
+    dos2unix
 
 # 设置工作目录
 WORKDIR /app
